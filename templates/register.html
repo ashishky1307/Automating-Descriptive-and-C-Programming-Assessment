@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Assessment System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+            font-family: 'Arial', sans-serif;
+        }
+        .register-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .register-header h2 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e1e5e9;
+            padding: 12px 15px;
+            transition: border-color 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-register {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            color: white;
+            width: 100%;
+            transition: transform 0.3s ease;
+        }
+        .btn-register:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        .user-type-selector {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #e1e5e9;
+        }
+        .user-type-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f8f9fa;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .user-type-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-container">
+            <div class="register-header">
+                <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+                <p>Join the Assessment System</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('main.register') }}" id="registerForm">
+                <!-- User Type Selector -->
+                <div class="user-type-selector">
+                    <button type="button" class="user-type-btn active" data-type="student">
+                        <i class="fas fa-user-graduate"></i> Student
+                    </button>
+                    <button type="button" class="user-type-btn" data-type="evaluator">
+                        <i class="fas fa-chalkboard-teacher"></i> Evaluator
+                    </button>
+                </div>
+
+                <input type="hidden" name="user_type" id="userType" value="student">
+
+                <div class="row">
+                    <!-- Basic Information -->
+                    <div class="col-md-6 mb-3">
+                        <label for="idField" class="form-label">
+                            <i class="fas fa-id-card"></i> <span id="idLabel">Student ID</span>
+                        </label>
+                        <input type="text" class="form-control" name="user_id" id="idField" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-user"></i> Full Name
+                        </label>
+                        <input type="text" class="form-control" name="name" id="name" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i> Email Address
+                        </label>
+                        <input type="email" class="form-control" name="email" id="email" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="phone" class="form-label">
+                            <i class="fas fa-phone"></i> Phone Number
+                        </label>
+                        <input type="tel" class="form-control" name="phone" id="phone">
+                    </div>
+
+                    <!-- Student-specific fields -->
+                    <div id="studentFields">
+                        <div class="col-md-6 mb-3">
+                            <label for="course" class="form-label">
+                                <i class="fas fa-book"></i> Course
+                            </label>
+                            <select class="form-control" name="course" id="course">
+                                <option value="">Select Course</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Information Technology">Information Technology</option>
+                                <option value="Software Engineering">Software Engineering</option>
+                                <option value="Data Science">Data Science</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="semester" class="form-label">
+                                <i class="fas fa-calendar"></i> Semester
+                            </label>
+                            <select class="form-control" name="semester" id="semester">
+                                <option value="">Select Semester</option>
+                                <option value="1">1st Semester</option>
+                                <option value="2">2nd Semester</option>
+                                <option value="3">3rd Semester</option>
+                                <option value="4">4th Semester</option>
+                                <option value="5">5th Semester</option>
+                                <option value="6">6th Semester</option>
+                                <option value="7">7th Semester</option>
+                                <option value="8">8th Semester</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Evaluator-specific fields -->
+                    <div id="evaluatorFields" style="display: none;">
+                        <div class="col-md-6 mb-3">
+                            <label for="department" class="form-label">
+                                <i class="fas fa-building"></i> Department
+                            </label>
+                            <input type="text" class="form-control" name="department" id="department">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="designation" class="form-label">
+                                <i class="fas fa-briefcase"></i> Designation
+                            </label>
+                            <input type="text" class="form-control" name="designation" id="designation">
+                        </div>
+                    </div>
+
+                    <!-- Password fields -->
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" class="form-control" name="password" id="password" 
+                               minlength="6" required>
+                        <div class="form-text">Minimum 6 characters</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="confirmPassword" class="form-label">
+                            <i class="fas fa-lock"></i> Confirm Password
+                        </label>
+                        <input type="password" class="form-control" name="confirm_password" 
+                               id="confirmPassword" required>
+                    </div>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="terms" required>
+                    <label class="form-check-label" for="terms">
+                        I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                    </label>
+                </div>
+
+                <!-- Register Button -->
+                <button type="submit" class="btn btn-register">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="login-link">
+                <p>Already have an account? 
+                    <a href="{{ url_for('main.login') }}">
+                        <i class="fas fa-sign-in-alt"></i> Sign in here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Terms and Conditions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Assessment System Terms of Use</h6>
+                    <p>By registering and using this assessment system, you agree to:</p>
+                    <ul>
+                        <li>Provide accurate and truthful information during registration</li>
+                        <li>Maintain the confidentiality of your login credentials</li>
+                        <li>Use the system only for legitimate educational purposes</li>
+                        <li>Not share exam content or answers with other students</li>
+                        <li>Accept that all submissions are final and binding</li>
+                        <li>Report any technical issues or suspicious activities</li>
+                    </ul>
+                    <p>The system administrators reserve the right to suspend accounts for violations of these terms.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // User type switcher
+        document.querySelectorAll('.user-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                document.querySelectorAll('.user-type-btn').forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Update hidden input
+                const userType = this.dataset.type;
+                document.getElementById('userType').value = userType;
+                
+                // Update form fields
+                const idLabel = document.getElementById('idLabel');
+                const studentFields = document.getElementById('studentFields');
+                const evaluatorFields = document.getElementById('evaluatorFields');
+                
+                if (userType === 'student') {
+                    idLabel.textContent = 'Student ID';
+                    studentFields.style.display = 'block';
+                    evaluatorFields.style.display = 'none';
+                    
+                    // Make student fields required
+                    document.getElementById('course').required = true;
+                    document.getElementById('semester').required = true;
+                    document.getElementById('department').required = false;
+                    document.getElementById('designation').required = false;
+                } else {
+                    idLabel.textContent = 'Employee ID';
+                    studentFields.style.display = 'none';
+                    evaluatorFields.style.display = 'block';
+                    
+                    // Make evaluator fields required
+                    document.getElementById('course').required = false;
+                    document.getElementById('semester').required = false;
+                    document.getElementById('department').required = true;
+                    document.getElementById('designation').required = true;
+                }
+            });
+        });
+
+        // Password confirmation validation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (password !== confirmPassword) {
+                this.setCustomValidity('Passwords do not match');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    </script>
+</body>
+</html>

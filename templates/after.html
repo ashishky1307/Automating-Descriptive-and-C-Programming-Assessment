@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluation Metrics - Assessment System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .metrics-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .metric-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-3px);
+        }
+        .progress-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .answer-section {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .marks-input {
+            max-width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">📊 Assessment System</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('main.evaluator_dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="metrics-header text-center">
+            <h2><i class="fas fa-chart-line"></i> Evaluation Metrics</h2>
+            <p class="mb-0">Comprehensive Analysis of Student Answer</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Metrics Overview -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card metric-card text-center h-100">
+                    <div class="card-body">
+                        <div class="progress-circle mx-auto mb-3" 
+                             style="background: conic-gradient(#28a745 {{ (evaluation.similarity or 0) * 3.6 }}deg, #e9ecef 0deg);">
+                            {{ "%.0f"|format(evaluation.similarity or 0) }}%
+                        </div>
+                        <h6>Similarity Score</h6>
+                        <p class="text-muted mb-0">Content matching with model answer</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card metric-card text-center h-100">
+                    <div class="card-body">
+                        <div class="progress-circle mx-auto mb-3 
+                             {% if (evaluation.grammar_mistakes or 0) <= 2 %}bg-success text-white
+                             {% elif (evaluation.grammar_mistakes or 0) <= 5 %}bg-warning text-dark
+                             {% else %}bg-danger text-white{% endif %}">
+                            {{ evaluation.grammar_mistakes or 0 }}
+                        </div>
+                        <h6>Grammar Errors</h6>
+                        <p class="text-muted mb-0">Language accuracy assessment</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card metric-card text-center h-100">
+                    <div class="card-body">
+                        <div class="progress-circle mx-auto mb-3 
+                             {% if (evaluation.word_count or 0) >= 50 %}bg-success text-white
+                             {% elif (evaluation.word_count or 0) >= 20 %}bg-warning text-dark
+                             {% else %}bg-danger text-white{% endif %}">
+                            {{ evaluation.word_count or 0 }}
+                        </div>
+                        <h6>Word Count</h6>
+                        <p class="text-muted mb-0">Answer length analysis</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card metric-card text-center h-100">
+                    <div class="card-body">
+                        <div class="progress-circle mx-auto mb-3 
+                             {% if (evaluation.predicted_marks or 0) >= 8 %}bg-success text-white
+                             {% elif (evaluation.predicted_marks or 0) >= 5 %}bg-warning text-dark
+                             {% else %}bg-danger text-white{% endif %}">
+                            {{ evaluation.predicted_marks or 0 }}/10
+                        </div>
+                        <h6>Predicted Marks</h6>
+                        <p class="text-muted mb-0">AI-generated score</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Answer Analysis -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-edit"></i> Student Answer</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="answer-section">
+                            {{ answer.answer_text }}
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> 
+                                Submitted: {{ answer.submitted_at.strftime('%Y-%m-%d %H:%M:%S') if answer.submitted_at else 'N/A' }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Summary -->
+                {% if evaluation.summary %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-robot"></i> AI Analysis Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ evaluation.summary }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Detailed Breakdown -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie"></i> Evaluation Breakdown</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Scoring Components:</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success"></i> Similarity: {{ "%.1f"|format((evaluation.similarity or 0) * 0.5) }} points</li>
+                                    <li><i class="fas fa-check text-success"></i> Word Count: {{ "%.1f"|format((evaluation.word_count or 0) * 0.3) }} points</li>
+                                    <li><i class="fas fa-check text-success"></i> Grammar: {{ "%.1f"|format((100 - (evaluation.grammar_mistakes or 0)) * 0.2) }} points</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Quality Indicators:</h6>
+                                <div class="mb-2">
+                                    <span class="badge 
+                                        {% if (evaluation.similarity or 0) >= 70 %}bg-success
+                                        {% elif (evaluation.similarity or 0) >= 40 %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        Content Relevance: 
+                                        {% if (evaluation.similarity or 0) >= 70 %}High
+                                        {% elif (evaluation.similarity or 0) >= 40 %}Medium
+                                        {% else %}Low{% endif %}
+                                    </span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge 
+                                        {% if (evaluation.word_count or 0) >= 50 %}bg-success
+                                        {% elif (evaluation.word_count or 0) >= 20 %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        Answer Length: 
+                                        {% if (evaluation.word_count or 0) >= 50 %}Adequate
+                                        {% elif (evaluation.word_count or 0) >= 20 %}Moderate
+                                        {% else %}Brief{% endif %}
+                                    </span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge 
+                                        {% if (evaluation.grammar_mistakes or 0) <= 2 %}bg-success
+                                        {% elif (evaluation.grammar_mistakes or 0) <= 5 %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        Language Quality: 
+                                        {% if (evaluation.grammar_mistakes or 0) <= 2 %}Excellent
+                                        {% elif (evaluation.grammar_mistakes or 0) <= 5 %}Good
+                                        {% else %}Needs Improvement{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Override Section -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user-edit"></i> Manual Evaluation</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('main.view_metrics', student_id=answer.student_id, question_id=answer.question_id) }}">
+                            <div class="mb-3">
+                                <label for="marks" class="form-label">Assign Marks (0-10):</label>
+                                <input type="number" class="form-control marks-input" 
+                                       name="marks" id="marks" 
+                                       min="0" max="10" step="0.5"
+                                       value="{{ evaluation.predicted_marks or 0 }}">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                <i class="fas fa-save"></i> Update Marks
+                            </button>
+                        </form>
+
+                        <!-- Quick Actions -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-success btn-sm" onclick="setMarks(10)">
+                                <i class="fas fa-star"></i> Excellent (10)
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="setMarks(7)">
+                                <i class="fas fa-thumbs-up"></i> Good (7)
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="setMarks(5)">
+                                <i class="fas fa-equals"></i> Average (5)
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="setMarks(0)">
+                                <i class="fas fa-times"></i> Poor (0)
+                            </button>
+                        </div>
+
+                        <!-- Evaluator Notes -->
+                        <div class="mt-4">
+                            <h6>Evaluation Guidelines:</h6>
+                            <ul class="small">
+                                <li>Check content accuracy</li>
+                                <li>Assess completeness</li>
+                                <li>Consider presentation</li>
+                                <li>Review examples used</li>
+                                <li>Evaluate understanding</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('main.view_answers', student_id=answer.student_id) }}" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left"></i> Back to Answers
+                            </a>
+                            <a href="{{ url_for('main.evaluator_dashboard') }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function setMarks(marks) {
+            document.getElementById('marks').value = marks;
+        }
+
+        // Add visual feedback for mark changes
+        document.getElementById('marks').addEventListener('change', function() {
+            const value = parseInt(this.value);
+            const cards = document.querySelectorAll('.metric-card');
+            
+            // Update visual feedback based on marks
+            cards.forEach(card => {
+                if (value >= 8) {
+                    card.style.borderLeft = '4px solid #28a745';
+                } else if (value >= 5) {
+                    card.style.borderLeft = '4px solid #ffc107';
+                } else {
+                    card.style.borderLeft = '4px solid #dc3545';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

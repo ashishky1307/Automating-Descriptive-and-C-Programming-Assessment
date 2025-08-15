@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C Program Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🔍 Program Results</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Home</a>
+                <a class="nav-link" href="/up">Test Another Program</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <!-- Status Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            {% if status == 'Success' %}
+                                ✅ Compilation & Execution Results
+                            {% elif status == 'Compilation Error' %}
+                                ❌ Compilation Error
+                            {% elif status == 'Runtime Error' %}
+                                ⚠️ Runtime Error
+                            {% else %}
+                                🔍 Program Results
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5>Status: 
+                                    {% if status == 'Success' %}
+                                        <span class="badge bg-success">{{ status }}</span>
+                                    {% elif status == 'Compilation Error' %}
+                                        <span class="badge bg-danger">{{ status }}</span>
+                                    {% elif status == 'Runtime Error' %}
+                                        <span class="badge bg-warning">{{ status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ status }}</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <h5>Score: 
+                                    {% if marks == 10 %}
+                                        <span class="badge bg-success">{{ marks }}/10</span>
+                                    {% elif marks >= 5 %}
+                                        <span class="badge bg-warning">{{ marks }}/10</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ marks }}/10</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output/Error Details Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            {% if status == 'Success' %}
+                                📤 Program Output
+                            {% else %}
+                                📋 Error Details
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if message %}
+                            <pre class="bg-light p-3 rounded"><code>{{ message }}</code></pre>
+                        {% else %}
+                            <div class="alert alert-info">
+                                No output or error message available.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Feedback Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">🎯 Feedback & Recommendations</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if status == 'Success' %}
+                            <div class="alert alert-success">
+                                <h6>✅ Excellent Work!</h6>
+                                <p class="mb-0">Your program compiled and executed successfully without any errors. Great job!</p>
+                            </div>
+                            <ul>
+                                <li>Your code follows proper C syntax</li>
+                                <li>No compilation errors detected</li>
+                                <li>Program executed without runtime errors</li>
+                                <li>Consider adding comments for better code documentation</li>
+                            </ul>
+                        {% elif status == 'Compilation Error' %}
+                            <div class="alert alert-danger">
+                                <h6>❌ Compilation Failed</h6>
+                                <p class="mb-0">Your program has syntax or compilation errors that need to be fixed.</p>
+                            </div>
+                            <h6>Common Solutions:</h6>
+                            <ul>
+                                <li>Check for missing semicolons (;)</li>
+                                <li>Verify all brackets { } are properly matched</li>
+                                <li>Ensure all variables are declared before use</li>
+                                <li>Check for typos in function names and keywords</li>
+                                <li>Include necessary header files (e.g., #include &lt;stdio.h&gt;)</li>
+                            </ul>
+                        {% elif status == 'Runtime Error' %}
+                            <div class="alert alert-warning">
+                                <h6>⚠️ Runtime Error Detected</h6>
+                                <p class="mb-0">Your program compiled successfully but encountered an error during execution.</p>
+                            </div>
+                            <h6>Common Causes:</h6>
+                            <ul>
+                                <li>Array index out of bounds</li>
+                                <li>Division by zero</li>
+                                <li>Infinite loops</li>
+                                <li>Accessing uninitialized variables</li>
+                                <li>Memory access violations</li>
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/up" class="btn btn-primary">🔄 Try Another Program</a>
+                    <a href="/" class="btn btn-secondary">🏠 Back to Home</a>
+                </div>
+
+                <!-- Progress Card -->
+                {% if marks is defined %}
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title">📊 Performance Breakdown</h6>
+                        <div class="progress mb-3">
+                            <div class="progress-bar 
+                                {% if marks == 10 %}bg-success
+                                {% elif marks >= 5 %}bg-warning
+                                {% else %}bg-danger{% endif %}" 
+                                role="progressbar" style="width: {{ (marks/10)*100 }}%">
+                                {{ marks }}/10
+                            </div>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <h6>Syntax</h6>
+                                <span class="badge {% if status != 'Compilation Error' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if status != 'Compilation Error' %}✓{% else %}✗{% endif %}
+                                </span>
+                            </div>
+                            <div class="col-4">
+                                <h6>Execution</h6>
+                                <span class="badge {% if status == 'Success' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if status == 'Success' %}✓{% else %}✗{% endif %}
+                                </span>
+                            </div>
+                            <div class="col-4">
+                                <h6>Overall</h6>
+                                <span class="badge {% if marks >= 8 %}bg-success{% elif marks >= 5 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {% if marks >= 8 %}Excellent
+                                    {% elif marks >= 5 %}Good
+                                    {% else %}Needs Work{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

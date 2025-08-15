@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Exam - Assessment System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .exam-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .question-card {
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+        }
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .question-counter {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .answer-textarea {
+            min-height: 150px;
+        }
+        .submit-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Timer -->
+    <div class="timer">
+        <i class="fas fa-clock text-warning"></i>
+        <span id="timer">02:00:00</span>
+    </div>
+
+    <!-- Question Counter -->
+    <div class="question-counter">
+        <i class="fas fa-list-ol text-primary"></i>
+        Questions: {{ questions|length }}
+    </div>
+
+    <div class="container mt-5">
+        <!-- Exam Header -->
+        <div class="exam-header text-center">
+            <h2><i class="fas fa-file-alt"></i> {{ question_paper.paper_name }}</h2>
+            <p><i class="fas fa-user"></i> Student: {{ student.name }} (ID: {{ student.student_id }})</p>
+            <p><i class="fas fa-calendar"></i> Exam Date: {{ moment().format('YYYY-MM-DD HH:mm:ss') }}</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('main.student_view_exam', paper_id=question_paper.id, student_id=student.id) }}" id="examForm">
+            {% for question in questions %}
+                <div class="card question-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-question-circle"></i> Question {{ loop.index }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="fw-bold">{{ question.question_text }}</p>
+                        
+                        <div class="mb-3">
+                            <label for="answers_{{ question.id }}" class="form-label">
+                                <i class="fas fa-edit"></i> Your Answer:
+                            </label>
+                            <textarea class="form-control answer-textarea" 
+                                      name="answers_{{ question.id }}" 
+                                      id="answers_{{ question.id }}"
+                                      placeholder="Write your answer here..."
+                                      required></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i> Please provide a detailed and clear answer.
+                            </div>
+                        </div>
+
+                        <!-- Character Count -->
+                        <div class="text-end">
+                            <small class="text-muted">
+                                Characters: <span id="count_{{ question.id }}">0</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Auto-save Status -->
+            <div class="alert alert-info">
+                <i class="fas fa-save"></i> 
+                <span id="saveStatus">Your answers are being auto-saved...</span>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="submit-section">
+                <h5><i class="fas fa-upload"></i> Submit Your Exam</h5>
+                <p class="text-muted">Please review your answers before submitting. Once submitted, you cannot modify your responses.</p>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="confirmSubmit" required>
+                    <label class="form-check-label" for="confirmSubmit">
+                        I confirm that I have completed the exam and want to submit my answers.
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                    <i class="fas fa-paper-plane"></i> Submit Exam
+                </button>
+                
+                <div class="mt-3">
+                    <a href="{{ url_for('main.student_dashboard', student_id=student.id) }}" 
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="submitModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-question-circle"></i> Confirm Submission</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to submit your exam?</p>
+                    <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmSubmitBtn">
+                        <i class="fas fa-check"></i> Yes, Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Timer functionality
+        let timeLeft = 2 * 60 * 60; // 2 hours in seconds
+        const timerElement = document.getElementById('timer');
+        
+        function updateTimer() {
+            const hours = Math.floor(timeLeft / 3600);
+            const minutes = Math.floor((timeLeft % 3600) / 60);
+            const seconds = timeLeft % 60;
+            
+            timerElement.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 300) { // 5 minutes warning
+                timerElement.parentElement.classList.add('bg-warning');
+            }
+            
+            if (timeLeft <= 0) {
+                alert('Time is up! Your exam will be submitted automatically.');
+                document.getElementById('examForm').submit();
+                return;
+            }
+            
+            timeLeft--;
+        }
+        
+        // Start timer
+        const timerInterval = setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // Character count for textareas
+        document.querySelectorAll('.answer-textarea').forEach(textarea => {
+            const questionId = textarea.id.split('_')[1];
+            const countElement = document.getElementById(`count_${questionId}`);
+            
+            textarea.addEventListener('input', function() {
+                countElement.textContent = this.value.length;
+            });
+        });
+
+        // Auto-save functionality
+        let autoSaveInterval;
+        function autoSave() {
+            const formData = new FormData(document.getElementById('examForm'));
+            // Here you would typically send an AJAX request to save the data
+            document.getElementById('saveStatus').textContent = 
+                `Auto-saved at ${new Date().toLocaleTimeString()}`;
+        }
+
+        // Auto-save every 30 seconds
+        autoSaveInterval = setInterval(autoSave, 30000);
+
+        // Submit confirmation
+        document.getElementById('submitBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check if all questions are answered
+            const textareas = document.querySelectorAll('.answer-textarea');
+            let allAnswered = true;
+            textareas.forEach(textarea => {
+                if (textarea.value.trim() === '') {
+                    allAnswered = false;
+                }
+            });
+            
+            if (!allAnswered) {
+                if (!confirm('Some questions are not answered. Do you still want to submit?')) {
+                    return;
+                }
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('submitModal'));
+            modal.show();
+        });
+
+        document.getElementById('confirmSubmitBtn').addEventListener('click', function() {
+            clearInterval(timerInterval);
+            clearInterval(autoSaveInterval);
+            document.getElementById('examForm').submit();
+        });
+
+        // Prevent page refresh/back button
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = 'Are you sure you want to leave? Your exam progress may be lost.';
+        });
+    </script>
+</body>
+</html>
